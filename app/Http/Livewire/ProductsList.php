@@ -21,9 +21,13 @@ class ProductsList extends Component
         ],
     ];
 
+    protected $listeners = ['delete', 'deleteSelected'];
+
     public array $categories = [];
 
     public array $countries = [];
+
+    public array $selected = [];
 
     public string $sortColumn = 'products.name';
 
@@ -42,6 +46,38 @@ class ProductsList extends Component
         $this->categories = Category::pluck('name', 'id')->toArray();
         $this->countries = Country::pluck('name', 'id')->toArray();
         
+    }
+
+    public function getSelectedCountProperty(): int
+    {
+        return count($this->selected);
+    }
+
+    public function deleteConfirm($method, $id = null): void
+    {
+        $this->dispatchBrowserEvent('swal:confirm', [
+            'type'  => 'warning',
+            'title' => 'Are you sure?',
+            'text'  => '',
+            'id'    => $id,
+            'method' => $method,
+        ]);
+    }
+
+    public function delete($id): void
+    {
+        $product = Product::findOrFail($id);
+
+        $product->delete();
+    }
+
+    public function deleteSelected(): void 
+    {
+        $products = Product::whereIn('id', $this->selected)->get();
+ 
+        $products->each->delete();
+ 
+        $this->reset('selected');
     }
 
     public function sortByColumn($column): void
